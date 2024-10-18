@@ -1,15 +1,21 @@
 {
     "name": "marksix-api",
-    "version": "0.0.1",
     "description": "Mark Six API",
-    "main": "index.js",
+    "private": true,
+    "version": "2024.10.0",
+    "license": "LGPL-3.0",
+    "author": "Jason Kwok <github@jasonhk.email> (https://imjason.hk)",
+    "homepage": "https://github.com/JasonHK/MarkSix-API#readme",
     "keywords": [
         "mark-six"
     ],
-    "type": "module",
-    "author": "Jason Kwok",
-    "license": "LGPL-3.0",
-    "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/JasonHK/MarkSix-API.git"
+    },
+    "bugs": {
+      "url": "https://github.com/JasonHK/MarkSix-API/issues"
+    },
     "scripts": {
         "deploy": "wrangler deploy",
         "dev": "wrangler dev",
@@ -17,6 +23,7 @@
         "test": "vitest",
         "cf-typegen": "wrangler types"
     },
+    "type": "module",
     "dependencies": {
         "graffle": "^0.0.0",
         "graphql": "^16.9.0",
