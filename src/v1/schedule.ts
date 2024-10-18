@@ -1,7 +1,7 @@
 import { IRequest, StatusError } from "itty-router";
 import { gql, request } from "graphql-request";
 
-import isValidLanguage from "./_commom/isValidLanguage";
+import isValidLanguage from "../_commom/isValidLanguage";
 
 export type Schedule = Month[];
 

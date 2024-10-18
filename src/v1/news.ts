@@ -1,6 +1,6 @@
 import { gql } from "graphql-request";
 
-import { HkjcClient } from "./_commom/clients";
+import { HkjcClient } from "../_commom/clients";
 
 interface News
 {
