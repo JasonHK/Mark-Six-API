@@ -16,9 +16,8 @@ jobs:
           commit_hash=$(git rev-parse HEAD | cut -c -7)
           build_time=$(date "+%Y-%m-%dT%H:%M:%S")
           
-          echo "[vars]" >> wrangler.toml
-          echo "COMMIT_HASH = $commit_hash" >> wrangler.toml
-          echo "BUILD_TIME = $build_time" >> wrangler.toml
+          sed -i "s/^COMMIT_HASH = .*/COMMIT_HASH = \"$commit_hash\"/g" wrangler.toml
+          sed -i "s/^BUILD_TIME = .*/BUILD_TIME = \"$build_time\"/g" wrangler.toml
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
