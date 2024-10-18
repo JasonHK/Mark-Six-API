@@ -120,7 +120,7 @@ const document = gql`
     }
 `;
 
-export async function get({ query }: IRequest): Promise<Schedule>
+export async function get({ query }: IRequest, env: Env): Promise<Schedule>
 {
     const language = query.language ?? "zh-HK";
     if (Array.isArray(language))
@@ -136,7 +136,7 @@ export async function get({ query }: IRequest): Promise<Schedule>
         "https://consvc.hkjc.com/JCBW/api/graph",
         document,
         { lang: language },
-        { "sc_apikey": "{FF2309B7-E8BB-49B2-82A7-36AE0B48F171}" });
+        { sc_apikey: env.SC_API_KEY });
 
     const schedule: Schedule = [];
 
