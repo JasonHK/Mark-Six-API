@@ -24,6 +24,8 @@ enabled = true
 # - https://developers.cloudflare.com/workers/configuration/secrets/
 [vars]
 SC_API_KEY = "{FF2309B7-E8BB-49B2-82A7-36AE0B48F171}"
+COMMIT_HASH = "0000000"
+BUILD_TIME = "0000-00-00T00:00:00"
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#workers-ai
