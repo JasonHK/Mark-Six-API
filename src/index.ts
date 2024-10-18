@@ -16,7 +16,7 @@ const router = AutoRouter<IRequest, RouterArgs>(
 	});
 
 router
-	.get("/", () => ({ name, description, version, homepage }))
+	.get("/", (_, env) => ({ name, description, version: env.COMMIT_HASH, build: env.BUILD_TIME, homepage }))
 	.get("/news", news.get)
 	.get("/schedule", schedule.get);
 
