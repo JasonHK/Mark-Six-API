@@ -1,5 +1,7 @@
 import { AutoRouter, IRequest, cors } from "itty-router";
 
+import { name, description, version, homepage } from "../package.json";
+
 import * as news from "./news";
 import * as schedule from "./schedule";
 
@@ -14,6 +16,7 @@ const router = AutoRouter<IRequest, RouterArgs>(
 	});
 
 router
+	.get("/", () => ({ name, description, version, homepage }))
 	.get("/news", news.get)
 	.get("/schedule", schedule.get);
 
