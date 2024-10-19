@@ -14,7 +14,7 @@
         "url": "git+https://github.com/JasonHK/MarkSix-API.git"
     },
     "bugs": {
-      "url": "https://github.com/JasonHK/MarkSix-API/issues"
+        "url": "https://github.com/JasonHK/MarkSix-API/issues"
     },
     "scripts": {
         "deploy": "wrangler deploy",
@@ -25,14 +25,17 @@
     },
     "type": "module",
     "dependencies": {
+        "chanfana": "^2.0.4",
         "graffle": "^0.0.0",
         "graphql": "^16.9.0",
         "graphql-request": "^7.1.0",
-        "itty-router": "^5.0.18"
+        "itty-router": "^5.0.18",
+        "zod": "^3.23.8"
     },
     "devDependencies": {
         "@cloudflare/vitest-pool-workers": "^0.5.2",
         "@cloudflare/workers-types": "^4.20241011.0",
+        "patch-package": "^8.0.0",
         "typescript": "^5.6.3",
         "vitest": "2.0.5",
         "wrangler": "^3.60.3"

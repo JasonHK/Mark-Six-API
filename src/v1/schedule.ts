@@ -1,65 +1,55 @@
-import { IRequest, StatusError } from "itty-router";
+import { IRequest } from "itty-router";
+import { OpenAPIRoute } from "chanfana";
+import { z } from "zod";
 import { gql, request } from "graphql-request";
 
-import isValidLanguage from "../_commom/isValidLanguage";
+import { Language } from "../_commom/Language";
 
-export type Schedule = Month[];
+type Event = z.infer<typeof Event>;
+const Event = z.object({
+    date: z.string().date(),
+    snowball: z.boolean(),
+});
 
-interface Month
-{
-    month: string;
-    events: Event[];
-    remarks: Remarks;
-}
+type Remarks = z.infer<typeof Remarks>;
+const Remarks = z.object({
+    header: z.string(),
+    message: z.string(),
+});
 
-interface Event
-{
-    /**
-     * The date a draw was scheduled to be held.
-     */
-    date: string;
+type Month = z.infer<typeof Month>;
+const Month = z.object({
+    month: z.string(),
+    events: Event.array(),
+    remarks: Remarks.nullable(),
+});
 
-    /**
-     * Whether the draw was a "Snowball Draws" or not.
-     */
-    snowball: boolean;
-}
+const Schedule = Month.array();
+type Schedule = z.infer<typeof Schedule>;
 
-interface Remarks
-{
-    header: string;
-    message: string;
-}
-
-interface FetchResponse
-{
-    item:
-    {
-        years: Array<
-        {
-            year: `${number}`;
-            months: Array<
-            {
-                key: `${number}`;
-                month: { value: `${number}`; };
-                dates:
-                {
-                    date: Array<{ value: `${number}`; }>;
-                };
-                snowballs:
-                {
-                    date: Array<{ value: `${number}`; }>;
-                };
-                presales:
-                {
-                    date: Array<{ value: `${number}`; }>;
-                };
-                header: { value: string; };
-                message: { value: string; };
-            }>;
-        }>;
-    };
-}
+type ScheduleResponse = z.infer<typeof ScheduleResponse>;
+const ScheduleResponse = z.object({
+    item: z.object({
+        years: z.array(z.object({
+            year: z.string().regex(/^\d{4}$/),
+            months: z.array(z.object({
+                key: z.string().regex(/^\d{1,2}$/),
+                month: z.object({ value: z.string().regex(/^\d{2}$/) }),
+                dates: z.object({
+                    date: z.array(z.object({ value: z.string().regex(/^\d{2}$/) })),
+                }),
+                snowballs: z.object({
+                    date: z.array(z.object({ value: z.string().regex(/^\d{2}$/) })),
+                }),
+                presales: z.object({
+                    date: z.array(z.object({ value: z.string().regex(/^\d{2}$/) })),
+                }),
+                header: z.object({ value: z.string() }),
+                message: z.object({ value: z.string() }),
+            })),
+        })),
+    }),
+});
 
 const document = gql`
     query MarksixFixtures($lang: String!)
@@ -120,63 +110,83 @@ const document = gql`
     }
 `;
 
-export async function get({ query }: IRequest, env: Env): Promise<Schedule>
+export class GetSchedule extends OpenAPIRoute
 {
-    const language = query.language ?? "zh-HK";
-    if (Array.isArray(language))
-    {
-        throw new StatusError(400);
-    }
-    else if (!isValidLanguage(language))
-    {
-        throw new StatusError(400);
-    }
+    schema = {
+        request: {
+            query: z.object({
+                language: Language.optional().default("zh-HK"),
+            }),
+        },
+        responses: {
+            "200": {
+                description: "",
+                content: {
+                    "application/json": {
+                        schema: Schedule,
+                    },
+                },
+            },
+        },
+    };
 
-    const response = await request<FetchResponse>(
-        "https://consvc.hkjc.com/JCBW/api/graph",
-        document,
-        { lang: language },
-        { sc_apikey: env.SC_API_KEY });
-
-    const schedule: Schedule = [];
-
-    for (const year of response.item.years)
+    async handle(_ :IRequest, env: Env): Promise<Schedule>
     {
-        for (const month of year.months)
+        const { query } = await this.getValidatedData<typeof this.schema>();
+        
+        const response = await request<ScheduleResponse>(
+                "https://consvc.hkjc.com/JCBW/api/graph",
+                document,
+                { lang: query.language },
+                { sc_apikey: env.SC_API_KEY })
+            .then(ScheduleResponse.parseAsync);
+
+        const schedule: Schedule = [];
+
+        for (const year of response.item.years)
         {
-            const events: Event[] = [];
-
-            for (const date of month.dates.date)
+            for (const month of year.months)
             {
-                events.push(
-                    {
-                        date: `${year.year}-${month.month.value}-${date.value}`,
-                        snowball: false,
-                    });
-            }
+                const events: Event[] = [];
 
-            for (const snowball of month.snowballs.date)
-            {
-                events.push(
-                    {
-                        date: `${year.year}-${month.month.value}-${snowball.value}`,
-                        snowball: true,
-                    });
-            }
-
-            events.sort((a, b) => (Date.parse(a.date) - Date.parse(b.date)));
-
-            schedule.push(
+                for (const date of month.dates.date)
                 {
-                    month: `${year.year}-${month.month.value}`,
-                    events,
-                    remarks: {
+                    events.push(
+                        {
+                            date: `${year.year}-${month.month.value}-${date.value}`,
+                            snowball: false,
+                        });
+                }
+
+                for (const snowball of month.snowballs.date)
+                {
+                    events.push(
+                        {
+                            date: `${year.year}-${month.month.value}-${snowball.value}`,
+                            snowball: true,
+                        });
+                }
+
+                events.sort((a, b) => (Date.parse(a.date) - Date.parse(b.date)));
+
+                let remarks = null;
+                if (month.header.value || month.message.value)
+                {
+                    remarks = {
                         header: month.header.value,
                         message: month.message.value,
-                    },
-                });
+                    };
+                }
+    
+                schedule.push(
+                    {
+                        month: `${year.year}-${month.month.value}`,
+                        events,
+                        remarks,
+                    });
+            }
         }
-    }
 
-    return schedule;
+        return schedule;
+    }
 }
