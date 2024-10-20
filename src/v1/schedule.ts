@@ -5,11 +5,21 @@ import { gql, request } from "graphql-request";
 
 import { Language } from "../_commom/Language";
 
+const EventType = z.enum(["draws", "presale"]);
+type EventType = z.infer<typeof EventType>;
+
 type Event = z.infer<typeof Event>;
-const Event = z.object({
-    date: z.string().date(),
-    snowball: z.boolean(),
-});
+const Event = z.discriminatedUnion("type", [
+    z.object({
+        date: z.string().date(),
+        type: z.literal(EventType.Enum.draws),
+        snowball: z.boolean(),
+    }),
+    z.object({
+        date: z.string().date(),
+        type: z.literal(EventType.Enum.presale),
+    }),
+]);
 
 type Remarks = z.infer<typeof Remarks>;
 const Remarks = z.object({
@@ -154,6 +164,7 @@ export class GetSchedule extends OpenAPIRoute
                     events.push(
                         {
                             date: `${year.year}-${month.month.value}-${date.value}`,
+                            type: EventType.Enum.draws,
                             snowball: false,
                         });
                 }
@@ -163,7 +174,17 @@ export class GetSchedule extends OpenAPIRoute
                     events.push(
                         {
                             date: `${year.year}-${month.month.value}-${snowball.value}`,
+                            type: EventType.Enum.draws,
                             snowball: true,
+                        });
+                }
+
+                for (const presale of month.presales.date)
+                {
+                    events.push(
+                        {
+                            date: `${year.year}-${month.month.value}-${presale.value}`,
+                            type: EventType.Enum.presale,
                         });
                 }
 
