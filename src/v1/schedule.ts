@@ -1,4 +1,4 @@
-import { IRequest } from "itty-router";
+import { IRequest, json } from "itty-router";
 import { OpenAPIRoute } from "chanfana";
 import { z } from "zod";
 import { gql, request } from "graphql-request";
@@ -122,6 +122,10 @@ const document = gql`
 
 export class GetSchedule extends OpenAPIRoute
 {
+    static headers = Object.freeze({
+        "Cache-Control": "public, max-age=3600",
+    });
+
     schema = {
         request: {
             query: z.object({
@@ -140,7 +144,7 @@ export class GetSchedule extends OpenAPIRoute
         },
     };
 
-    async handle(_ :IRequest, env: Env): Promise<Schedule>
+    async handle(_ :IRequest, env: Env): Promise<Response>
     {
         const { query } = await this.getValidatedData<typeof this.schema>();
         
@@ -208,6 +212,6 @@ export class GetSchedule extends OpenAPIRoute
             }
         }
 
-        return schedule;
+        return json(schedule, { headers: GetSchedule.headers });
     }
 }
