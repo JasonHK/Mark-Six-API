@@ -61,6 +61,8 @@ const ScheduleResponse = z.object({
     }),
 });
 
+const cache = caches.default;
+
 const document = gql`
     query MarksixFixtures($lang: String!)
     {
@@ -144,11 +146,16 @@ export class GetSchedule extends OpenAPIRoute
         },
     };
 
-    async handle(_ :IRequest, env: Env): Promise<Response>
+    async handle(_ :IRequest, env: Env, ctx: ExecutionContext): Promise<Response>
     {
         const { query } = await this.getValidatedData<typeof this.schema>();
+
+        const cacheKey = `https://marksix-api/v1/schedule?language=${query.language}`;
         
-        const response = await request<ScheduleResponse>(
+        let res = await cache.match(cacheKey);
+        if (res) { return new Response(res.body, res); }
+
+        const response = await request(
                 "https://consvc.hkjc.com/JCBW/api/graph",
                 document,
                 { lang: query.language },
@@ -212,6 +219,9 @@ export class GetSchedule extends OpenAPIRoute
             }
         }
 
-        return json(schedule, { headers: GetSchedule.headers });
+        res = json(schedule, { headers: GetSchedule.headers });
+        ctx.waitUntil(cache.put(cacheKey, res.clone()));
+
+        return res;
     }
 }
